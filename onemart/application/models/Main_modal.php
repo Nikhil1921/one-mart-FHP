@@ -9,6 +9,7 @@ class Main_modal extends MY_Model
 		parent::__construct();
 		$this->banners = $this->config->item('banners');
 		$this->products = $this->config->item('products');
+		$this->category = $this->config->item('category');
 	}
 
     private $cart = 'cart';
@@ -17,6 +18,19 @@ class Main_modal extends MY_Model
 	public function getBanners()
     {
         return $this->getAll('banners', "title, sub_title, CONCAT('".base_url($this->banners)."', banner) banner", ['is_deleted' => 0]);
+    }
+
+	public function getCats($c_id=0)
+    {
+        return $this->main->getAll('category', 'id, cat_name, CONCAT("'.base_url($this->category).'", image) image', ['is_deleted' => 0, 'parent_id' => $c_id], 'cat_name ASC');
+        /* return $this->cats = array_map(function($cat){
+			return [
+				'id' => $cat['id'],
+				'cat_name' => $cat['cat_name'],
+				'image' => $cat['image'],
+				'sub_cats' => $this->main->getAll('category', 'id, cat_name, CONCAT("'.base_url($this->category).'", image) image', ['is_deleted' => 0, 'parent_id' => $cat['id']], 'cat_name ASC')
+			];
+		}, ); */
     }
 
 	public function getCart($u_id)
@@ -29,26 +43,9 @@ class Main_modal extends MY_Model
         return [];
     }
 
-	public function getProds($show)
-    {
-        foreach ($show as $p_show) {
-            $return[$p_show] = $this->db->select('p.id, p.p_title, p.p_price, CONCAT("'.$this->products.'", p.image) image, CONCAT(c.cat_slug, "/", sc.cat_slug, "/", p.p_slug) slug, p_show, LEFT(p.description, 230) description')
-                                        ->from('products p')
-                                        ->where(['p.p_show' => $p_show])
-                                        ->where(['c.is_deleted' => 0, 'sc.is_deleted' => 0, 'p.is_deleted' => 0])
-                                        ->join('category c', 'c.id = p.cat_id')
-                                        ->join('category sc', 'sc.id = p.sub_cat_id')
-                                        ->order_by('p.id DESC')
-                                        ->limit(6)
-                                        ->get()->result();
-        }
-        
-        return $return;
-    }
-
 	public function makeQuery($where)
     {
-        $this->db->select('p.id, p.p_title, p.p_price, CONCAT("'.$this->products.'", p.image) image, CONCAT(c.cat_slug, "/", sc.cat_slug, "/", p.p_slug) slug, LEFT(p.description, 230) description')
+        $this->db->select('p.id, p.p_title, p.p_price, CONCAT("'.base_url($this->products).'", p.image) image, description, multi_image')
                 ->from('products p')
                 ->where($where)
                 ->where(['c.is_deleted' => 0, 'sc.is_deleted' => 0, 'p.is_deleted' => 0])
@@ -56,12 +53,19 @@ class Main_modal extends MY_Model
                 ->join('category sc', 'sc.id = p.sub_cat_id');
     }
 
-	public function getProducts($start, $end, $where)
+	public function getProducts($where)
+	// public function getProducts($start, $end, $where)
     {
-        
         $this->makeQuery($where);
         
-        return $this->db->limit($end, $start)->get()->result();
+        // return $this->db->limit($end, $start)->get()->result();
+        return array_map(function($p){
+            $p->multi_image = $p->multi_image ? array_map(function($img){
+                return base_url($this->products.$img);
+            }, explode(', ', $p->multi_image)) : [];
+            
+            return $p;
+        }, $this->db->get()->result());
     }
 
 	public function prodCount($where)

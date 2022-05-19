@@ -88,9 +88,6 @@
                                 <?= anchor(admin('coupon'), '<i data-feather="file-text"></i><span> Coupon Code</span>', 'class="sidebar-header '.($name == 'coupon' ? 'active' : '').'"') ?>
                             </li>
                             <li>
-                                <?= anchor(admin('users'), '<i data-feather="users"></i><span> Users</span>', 'class="sidebar-header '.($name == 'users' ? 'active' : '').'"') ?>
-                            </li>
-                            <li>
                                 <?= anchor(admin('state'), '<i data-feather="file"></i><span> State</span>', 'class="sidebar-header '.($name == 'state' ? 'active' : '').'"') ?>
                             </li>
                             <li>

@@ -5,6 +5,7 @@ class SubCategory extends Admin_controller  {
     public function __construct()
 	{
 		parent::__construct();
+        $this->path = $this->config->item('category');
 		$this->cats = $this->main->getAll($this->table, 'id, cat_name', ['is_deleted' => 0, 'parent_id' => 0]);
 	}
 
@@ -37,7 +38,7 @@ class SubCategory extends Admin_controller  {
             $sub_array = [];
             $sub_array[] = $sr;
             $sub_array[] = $row->cat_name;
-            $sub_array[] = $row->cat_slug;
+            $sub_array[] = img(['src' => $this->path.$row->image, 'width' => '100', 'height' => '100']);
             
             $action = '<div class="btn-group" role="group"><button class="btn btn-success dropdown-toggle" id="btnGroupVerticalDrop1" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="icon-settings"></span></button><div class="dropdown-menu" aria-labelledby="btnGroupVerticalDrop1" x-placement="bottom-start">';
@@ -77,14 +78,26 @@ class SubCategory extends Admin_controller  {
         if ($this->form_validation->run() == FALSE)
             return $this->template->load('template', "$this->redirect/form", $data);
         else{
-            $post = [
-                'cat_name'        => $this->input->post('cat_name'),
-                'parent_id'       => d_id($this->input->post('parent_id')),
-                'cat_slug'        => strtolower($this->input->post('cat_slug')),
-                'seo_title'       => $this->input->post('seo_title'),
-                'seo_keyword'     => $this->input->post('seo_keyword'),
-                'seo_description' => $this->input->post('seo_description')
-            ];
+            $image = $this->uploadImage('image', 'jpg|jpeg|png', ['max_width' => 250, 'max_height' => 250]);
+            
+            if ($image['error'] == TRUE){
+                $this->session->set_flashdata('error', $image["message"]);
+                return $this->template->load('template', "$this->redirect/form", $data);
+            }else{
+                $post = [
+                    'cat_name'        => $this->input->post('cat_name'),
+                    'parent_id'       => d_id($this->input->post('parent_id')),
+                    'image'           => $image['message'],
+                    'seo_title'       => $this->input->post('seo_title'),
+                    'seo_keyword'     => $this->input->post('seo_keyword'),
+                    'seo_description' => $this->input->post('seo_description')
+                ];
+
+                $id = $this->main->add($post, $this->table);
+
+                flashMsg($id, "$this->title added.", "$this->title not added. Try again.", $this->redirect);
+            }
+            
 
             $id = $this->main->add($post, $this->table);
 
@@ -103,18 +116,28 @@ class SubCategory extends Admin_controller  {
             $data['name'] = $this->name;
             $data['operation'] = "Update";
             $data['url'] = $this->redirect;
-            $data['data'] = $this->main->get($this->table, 'cat_name, parent_id, seo_title, seo_keyword, seo_description, cat_slug', ['id' => d_id($id)]);
+            $data['data'] = $this->main->get($this->table, 'cat_name, parent_id, seo_title, seo_keyword, seo_description, image', ['id' => d_id($id)]);
             
             return $this->template->load('template', "$this->redirect/form", $data);
         }else{
             $post = [
                 'cat_name'        => $this->input->post('cat_name'),
                 'parent_id'       => d_id($this->input->post('parent_id')),
-                'cat_slug'        => strtolower($this->input->post('cat_slug')),
                 'seo_title'       => $this->input->post('seo_title'),
                 'seo_keyword'     => $this->input->post('seo_keyword'),
                 'seo_description' => $this->input->post('seo_description')
             ];
+
+            if (!empty($_FILES['image']['name'])) {
+                $image = $this->uploadImage('image', 'jpg|jpeg|png', ['max_width' => 250, 'max_height' => 250]);
+                if ($image['error'] == TRUE)
+                    flashMsg(0, "", $image["message"], "$this->redirect/update/$id");
+                else{
+                    if (is_file($this->path.$this->input->post('image')))
+                        unlink($this->path.$this->input->post('image'));
+                    $post['image'] = $image['message'];
+                }
+            }
             
             $id = $this->main->update(['id' => d_id($id)], $post, $this->table);
 
@@ -132,20 +155,6 @@ class SubCategory extends Admin_controller  {
             $id = $this->main->update(['id' => d_id($this->input->post('id'))], ['is_deleted' => 1], $this->table);
             flashMsg($id, "$this->title deleted.", "$this->title not deleted.", $this->redirect);
         }
-    }
-
-    public function slug_check($slug)
-    {
-        $check = $this->uri->segment(4) ? d_id($this->uri->segment(4)) : 0;
-        $parent_id = $this->input->post('parent_id') ? d_id($this->input->post('parent_id')) : 0;
-        $where = ['cat_slug' => $slug, 'id != ' => $check, 'is_deleted' => 0, 'parent_id' => $parent_id];
-        
-        if ($this->main->check($this->table, $where, 'id'))
-        {
-            $this->form_validation->set_message('slug_check', 'The %s is already in use');
-            return FALSE;
-        } else
-            return TRUE;
     }
 
     protected $validate = [
@@ -166,16 +175,6 @@ class SubCategory extends Admin_controller  {
                 'required' => "%s is required",
                 'max_length' => "Max 50 chars allowed.",
                 'alpha_numeric_spaces' => "Only characters and numbers are allowed.",
-            ],
-        ],
-        [
-            'field' => 'cat_slug',
-            'label' => 'Sub Category slug',
-            'rules' => 'required|max_length[50]|alpha_dash|trim|callback_slug_check',
-            'errors' => [
-                'required' => "%s is required",
-                'max_length' => "Max 50 chars allowed.",
-                'alpha_dash' => "Only characters and numbers are allowed.",
             ],
         ]
     ];

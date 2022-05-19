@@ -23,7 +23,7 @@
             <thead>
                 <th class="target">Sr.</th>
                 <th>Sub Category</th>
-                <th>Slug</th>
+                <th class="target">Image</th>
                 <th class="target">Action</th>
             </thead>
             <tbody>

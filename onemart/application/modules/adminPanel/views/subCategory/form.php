@@ -3,7 +3,7 @@
     <h5><?= $title ?> <?= $operation ?></h5>
 </div>
 <div class="card-body">
-    <?= form_open() ?>
+    <?= form_open_multipart('', '', ['image' => isset($data['image']) ? $data['image'] : '']) ?>
         <div class="row">
             <div class="col-6">
                 <div class="form-group">
@@ -33,22 +33,22 @@
                     <?= form_error('cat_name') ?>
                 </div>
             </div>
-            <div class="col-6">
+            <div class="col-<?= (isset($data['image'])) ? 4 : 6 ?>">
                 <div class="form-group">
-                    <?= form_label('Sub Category Slug', 'cat_slug', 'class="col-form-label"') ?>
+                    <?= form_label('Image <span class="text-danger">(Size should be 250*250)</span>', 'image', 'class="col-form-label"') ?>
                     <?= form_input([
                         'class' => "form-control",
-                        'type' => "text",
-                        'id' => "cat_slug",
-                        'name' => "cat_slug",
-                        'maxlength' => 50,
-                        'readonly' => 'readonly',
-                        'required' => "",
-                        'value' => set_value('cat_slug') ? set_value('cat_slug') : (isset($data['cat_slug']) ? $data['cat_slug'] : '')
+                        'type' => "file",
+                        'id' => "image",
+                        'name' => "image",
                     ]); ?>
-                    <?= form_error('cat_slug') ?>
                 </div>
             </div>
+            <?php if (isset($data['image'])): ?>
+                <div class="col-2">
+                    <?= img(['src' => $this->path.$data['image'], 'width' => '100%', 'height' => '70']); ?>
+                </div>
+            <?php endif ?>
             <div class="col-12"></div>
             <div class="col-3">
                 <?= form_button([

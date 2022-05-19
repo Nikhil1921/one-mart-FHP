@@ -39,7 +39,7 @@ class Products extends Admin_controller  {
             $sub_array[] = $sr;
             $sub_array[] = $row->p_title;
             $sub_array[] = $row->p_price;
-            $sub_array[] = $row->p_qty;
+            $sub_array[] = $row->sub_cat;
             $sub_array[] = img(['src' => $this->path.$row->image, 'width' => '50', 'height' => '50']);
             
             $action = '<div class="btn-group" role="group"><button class="btn btn-success dropdown-toggle" id="btnGroupVerticalDrop1" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -81,7 +81,7 @@ class Products extends Admin_controller  {
         if ($this->form_validation->run() == FALSE)
             return $this->template->load('template', "$this->redirect/form", $data);
         else{
-            $image = $this->uploadImage('image', 'jpg|jpeg|png', ['max_width' => 250, 'max_height' => 250, 'min_width' => 250, 'min_height' => 250]);
+            $image = $this->uploadImage('image', 'jpg|jpeg|png', ['max_width' => 250, 'max_height' => 250]);
             if ($image['error'] == TRUE){
                 $this->session->set_flashdata('error', $image["message"]);
                 return $this->template->load('template', "$this->redirect/form", $data);
@@ -90,13 +90,8 @@ class Products extends Admin_controller  {
                     'cat_id'            => d_id($this->input->post('cat_id')),
                     'sub_cat_id'        => d_id($this->input->post('sub_cat_id')),
                     'p_title'           => $this->input->post('p_title'),
-                    'p_slug'            => strtolower($this->input->post('p_slug')),
-                    'p_qty'             => $this->input->post('p_qty'),
                     'p_price'           => $this->input->post('p_price'),
                     'description'       => $this->input->post('description'),
-                    'p_show'            => $this->input->post('p_show'),
-                    'sku_code'          => $this->input->post('sku_code'),
-                    'hns_code'          => $this->input->post('hns_code'),
                     'gst'               => $this->input->post('gst'),
                     'seo_title'         => $this->input->post('seo_title'),
                     'seo_keyword'       => $this->input->post('seo_keyword'),
@@ -121,7 +116,7 @@ class Products extends Admin_controller  {
             $data['name'] = $this->name;
             $data['operation'] = "Update";
             $data['url'] = $this->redirect;
-            $data['data'] = $this->main->get($this->table, 'cat_id, sub_cat_id, p_title, p_slug, p_qty, p_price, description, p_show, seo_title, seo_keyword, seo_description, image, sku_code, hns_code, gst', ['id' => d_id($id)]);
+            $data['data'] = $this->main->get($this->table, 'cat_id, sub_cat_id, p_title, p_price, description, seo_title, seo_keyword, seo_description, image, gst', ['id' => d_id($id)]);
             
             return $this->template->load('template', "$this->redirect/form", $data);
         }else{
@@ -129,21 +124,16 @@ class Products extends Admin_controller  {
                 'cat_id'            => d_id($this->input->post('cat_id')),
                 'sub_cat_id'        => d_id($this->input->post('sub_cat_id')),
                 'p_title'           => $this->input->post('p_title'),
-                'p_slug'            => strtolower($this->input->post('p_slug')),
-                'p_qty'             => $this->input->post('p_qty'),
-                'sku_code'          => $this->input->post('sku_code'),
-                'hns_code'          => $this->input->post('hns_code'),
                 'gst'               => $this->input->post('gst'),
                 'p_price'           => $this->input->post('p_price'),
                 'description'       => $this->input->post('description'),
-                'p_show'            => $this->input->post('p_show'),
                 'seo_title'         => $this->input->post('seo_title'),
                 'seo_keyword'       => $this->input->post('seo_keyword'),
                 'seo_description'   => $this->input->post('seo_description'),
             ];
 
             if (!empty($_FILES['image']['name'])) {
-                $image = $this->uploadImage('image', 'jpg|jpeg|png', ['max_width' => 250, 'max_height' => 250, 'min_width' => 250, 'min_height' => 250]);
+                $image = $this->uploadImage('image', 'jpg|jpeg|png', ['max_width' => 250, 'max_height' => 250]);
                 if ($image['error'] == TRUE)
                     flashMsg(0, "", $image["message"], "$this->redirect/update/$id");
                 else{
@@ -173,19 +163,22 @@ class Products extends Admin_controller  {
 
 	public function multi_images($id)
     {
+        $imgs = $this->main->check($this->table, ['id' => d_id($id)], 'multi_image');
+        $imgs = $imgs ? explode(', ', $imgs) : [];
+
         if ($this->input->server('REQUEST_METHOD') === 'GET') {
             $data['title'] = $this->title;
+            $data['datatable'] = "$this->redirect/get";
             $data['name'] = $this->name;
             $data['operation'] = "Upload Images";
             $data['url'] = $this->redirect;
-            $data['dropzone'] = true;
             $data['id'] = $id;
-    
+            $data['imgs'] = $imgs;
+            
             return $this->template->load('template', "$this->redirect/multi-images", $data);
         }else{
             $files = $_FILES;
-            $imgs = $this->main->check($this->table, ['id' => d_id($id)], 'multi_image');
-            $imgs = $imgs ? explode(', ', $imgs) : [];
+            
             for ($i=0; $i < count($files['image']['name']); $i++) {
                 $_FILES['userfile']['name']= $files['image']['name'][$i];
                 $_FILES['userfile']['type']= $files['image']['type'][$i];
@@ -193,14 +186,14 @@ class Products extends Admin_controller  {
                 $_FILES['userfile']['error']= $files['image']['error'][$i];
                 $_FILES['userfile']['size']= $files['image']['size'][$i];
 
-                $save = $this->uploadImage('userfile', 'jpg|jpeg|png', ['max_width' => 400, 'max_height' => 400, 'min_width' => 230, 'min_height' => 230], time()+$i, ['width' => 82, 'height' => 82]);
-                if (!$save['error']) {
-                    if (!$imgs) {
+                $save = $this->uploadImage('userfile', 'jpg|jpeg|png', ['max_width' => 250, 'max_height' => 250], time()+$i);
+
+                if (!$save['error']):
+                    if (!$imgs)
                         $imgs[] = $save['message'];
-                    }else{
+                    else
                         array_push($imgs, $save['message']);
-                    }
-                }
+                endif;
             }
 
             $u_id = $this->main->update(['id' => d_id($id)], ['multi_image' => implode(', ', $imgs)], $this->table);
@@ -209,29 +202,23 @@ class Products extends Admin_controller  {
         }
     }
 
-    public function remove_image($id, $image)
+    public function remove_image()
     {
+        $id = $this->input->post('id');
+        $image = $this->input->post('img');
+
         $imgs = $this->main->check($this->table, ['id' => d_id($id)], 'multi_image');
         $imgs = $imgs ? explode(', ', $imgs) : [];
-        re($imgs);
-        /* 
 
+        $imgs = array_filter($imgs, function($img) use ($image) {
+            if ($img !== $image) return $img;
+        });
+        
         $u_id = $this->main->update(['id' => d_id($id)], ['multi_image' => implode(', ', $imgs)], $this->table);
-        flashMsg($id, "$this->title updated.", "$this->title not updated. Try again.", "$this->redirect/multi-images/$id"); */
-    }
+        
+        if($u_id && is_file($this->path.$image)) unlink($this->path.$image);
 
-    public function slug_check($slug)
-    {
-        $check = $this->uri->segment(4) ? d_id($this->uri->segment(4)) : 0;
-
-        $where = ['p_slug' => $slug, 'id != ' => $check, 'is_deleted' => 0];
-
-        if ($this->main->check($this->table, $where, 'id'))
-        {
-            $this->form_validation->set_message('slug_check', 'The %s is already in use');
-            return FALSE;
-        } else
-            return TRUE;
+        flashMsg($id, "$this->title updated.", "$this->title not updated. Try again.", "$this->redirect/multi-images/$id");
     }
 
     protected $validate = [
@@ -263,25 +250,6 @@ class Products extends Admin_controller  {
             ],
         ],
         [
-            'field' => 'p_slug',
-            'label' => 'Slug',
-            'rules' => 'required|max_length[100]|alpha_dash|trim|callback_slug_check',
-            'errors' => [
-                'required' => "%s is required",
-                'max_length' => "Max 100 chars allowed.",
-            ],
-        ],
-        [
-            'field' => 'p_qty',
-            'label' => 'Quantity',
-            'rules' => 'required|max_length[100]|trim|numeric',
-            'errors' => [
-                'required' => "%s is required",
-                'numeric' => "%s is invalid",
-                'max_length' => "Max 100 chars allowed.",
-            ],
-        ],
-        [
             'field' => 'p_price',
             'label' => 'p_price',
             'rules' => 'required|max_length[100]|trim|numeric',
@@ -298,30 +266,6 @@ class Products extends Admin_controller  {
             'errors' => [
                 'required' => "%s is required",
             ],
-        ],
-        [
-            'field' => 'sku_code',
-            'label' => 'SKU code',
-            'rules' => 'required|trim|max_length[50]',
-            'errors' => [
-                'required' => "%s is required",
-            ],
-        ],
-        [
-            'field' => 'hns_code',
-            'label' => 'HNS code',
-            'rules' => 'required|trim|max_length[50]',
-            'errors' => [
-                'required' => "%s is required",
-            ],
-        ],
-        [
-            'field' => 'p_show',
-            'label' => 'Option To show',
-            'rules' => 'required|trim',
-            'errors' => [
-                'required' => "%s is required",
-            ],
-        ],
+        ]
     ];
 }

@@ -17,3 +17,5 @@ uploads/banners/*
 !uploads/banners/index.html
 uploads/products/*
 !uploads/products/index.html
+uploads/category/*
+!uploads/category/index.html

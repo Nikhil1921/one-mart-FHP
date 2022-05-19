@@ -6,7 +6,7 @@ $route['404_override'] = 'home/error_404';
 $route['translate_uri_dashes'] = TRUE;
 
 // front routes
-$route['wishlist'] = 'home/wishlist';
+/* $route['wishlist'] = 'home/wishlist';
 $route['getProduct'] = 'home/getProduct';
 $route['cart'] = 'home/cart';
 $route['checkout']['get'] = 'user/checkout';
@@ -41,11 +41,11 @@ $route['payment-protection'] = 'home/payment';
 $route['refund-policy'] = 'home/refund';
 $route['delivery-information'] = 'home/delivery';
 
-if ($this->uri->segment(1) !== $admin)
+if (! in_array($this->uri->segment(1), ['api', $admin]))
 {
     $route['(:any)(/:any)?'] = 'home/shop/$1$2';
     $route['(:any)/(:any)/(:any)'] = 'home/product/$1/$2/$3';
-}
+} */
 
 // admin routes
 $route["$admin/forgot-password"] = "$admin/login/forgot_password";

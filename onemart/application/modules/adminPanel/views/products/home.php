@@ -24,7 +24,7 @@
                 <th class="target">Sr.</th>
                 <th>Title</th>
                 <th>Price</th>
-                <th>Quantity</th>
+                <th>Sub category</th>
                 <th class="target">Image</th>
                 <th class="target">Action</th>
             </thead>

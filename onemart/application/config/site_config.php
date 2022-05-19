@@ -5,3 +5,4 @@ $config['email'] = 'support@utpadakse.com';
 $config['mobile'] = '8320406016';
 $config['banners'] = 'uploads/banners/';
 $config['products'] = 'uploads/products/';
+$config['category'] = 'uploads/category/';
