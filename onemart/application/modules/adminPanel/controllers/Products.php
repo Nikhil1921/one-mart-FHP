@@ -81,7 +81,7 @@ class Products extends Admin_controller  {
         if ($this->form_validation->run() == FALSE)
             return $this->template->load('template', "$this->redirect/form", $data);
         else{
-            $image = $this->uploadImage('image', 'jpg|jpeg|png', ['max_width' => 500, 'max_height' => 500]);
+            $image = $this->uploadImage('image');
             if ($image['error'] == TRUE){
                 $this->session->set_flashdata('error', $image["message"]);
                 return $this->template->load('template', "$this->redirect/form", $data);
@@ -133,7 +133,7 @@ class Products extends Admin_controller  {
             ];
 
             if (!empty($_FILES['image']['name'])) {
-                $image = $this->uploadImage('image', 'jpg|jpeg|png', ['max_width' => 500, 'max_height' => 500]);
+                $image = $this->uploadImage('image');
                 if ($image['error'] == TRUE)
                     flashMsg(0, "", $image["message"], "$this->redirect/update/$id");
                 else{
@@ -186,7 +186,7 @@ class Products extends Admin_controller  {
                 $_FILES['userfile']['error']= $files['image']['error'][$i];
                 $_FILES['userfile']['size']= $files['image']['size'][$i];
 
-                $save = $this->uploadImage('userfile', 'jpg|jpeg|png', ['max_width' => 500, 'max_height' => 500], time()+$i);
+                $save = $this->uploadImage('userfile', 'jpg|jpeg|png', [], time()+$i);
 
                 if (!$save['error']):
                     if (!$imgs)
